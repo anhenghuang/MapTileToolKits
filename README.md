@@ -1,16 +1,22 @@
 ## MapTileToolKits
 
-Map tile toolkits
+```shell
+pip3 install mttk --user
+```
+
+MTTK is Map tile toolkits
 
 - coordinate convert
 - crawler
 - map image concat
 
-地图瓦片工具包 
+MTTK是地图瓦片工具包，包含以下功能
 
 - 坐标系转换
 - 地图爬虫
 - 地图拼接
+
+MTTK only support python3（MTTK只支持python3版本，不支持python2）
 
 ```python
 import mttk
@@ -50,7 +56,7 @@ plt.imshow(cv2.cvtColor(img_tile, cv2.COLOR_BGR2RGB))
 
     <matplotlib.image.AxesImage at 0x7fdd7b1a81d0>
 
-![png](output_4_2.png)
+![png](images/example_1.png)
 
 
 - Save Image
@@ -79,7 +85,7 @@ plt.imshow(cv2.cvtColor(img_neighbor, cv2.COLOR_BGR2RGB))
 
     <matplotlib.image.AxesImage at 0x7fdd7acfc710>
 
-![png](output_8_2.png)
+![png](images/example_2.png)
 
 ```python
 img_neighbor = mttk.getNeighborImg(tile, ring=2)
@@ -91,8 +97,4 @@ plt.imshow(cv2.cvtColor(img_neighbor, cv2.COLOR_BGR2RGB))
 
     <matplotlib.image.AxesImage at 0x7fdd792b5d68>
 
-![png](output_9_2.png)
-
-```python
-
-```
+![png](images/example_3.png)
