@@ -6,20 +6,19 @@ import math
 import numpy as np
 import urllib.request
 
+
 class Tile:
     x = y = zoom = None
-    tile_type = 'google_satellite'
+    style = 'google_satellite'
 
-    def __init__(self, x, y, zoom, tile_type=None):
+    def __init__(self, x, y, zoom, style=None):
         self.x, self.y, self.zoom = x, y, zoom
-        if tile_type:
-            self.tile_type = tile_type
+        if style:
+            self.style = style
 
     def getall(self):
         return self.x, self.y, self.zoom
 
-    def get_tile_type(self):
-        return self.tile_type
 
 agents = [
     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
@@ -60,26 +59,53 @@ agents = [
 ]
 
 
-def latlng2tile(lat: float, lng: float, zoom: float, tile_type: str = None) -> Tile:
-    lat_rad = math.radians(lat)
-    n = 2.0 ** zoom
-    x = int((lng + 180.0) / 360.0 * n)
-    y = int((1.0 - math.log(math.tan(lat_rad) + (1 / math.cos(lat_rad))) / math.pi) / 2.0 * n)
-    return Tile(x, y, zoom)
+def geo_2_tile(lat: float, lng: float, zoom: float, style: str = None) -> Tile:
+    if style.split('_')[0] in ['google', 'gaode']:
+        lat_rad = math.radians(lat)
+        n = 2.0 ** zoom
+        x = int((lng + 180.0) / 360.0 * n)
+        y = int((1.0 - math.log(math.tan(lat_rad) + (1 / math.cos(lat_rad))) / math.pi) / 2.0 * n)
+    else:
+        raise NotImplementedError("Unknown style")
+    return Tile(x, y, zoom, style)
 
 
-def getTile(tile: Tile):
+def tile_2_geo(tile: Tile) -> list:
     x, y, zoom = tile.getall()
-    tilepath = 'http://mt2.google.cn/vt/lyrs=s&hl=zh-CN&gl=CN&src=app&x=' + str(x) + '&y=' + str(y) + '&z=' + str(
-        zoom) + '&s=G'
-    req = urllib.request.Request(tilepath)
+    if tile.style.split('_')[0] in ['google', 'gaode']:
+        n = 2.0 ** zoom
+        lng = x / n * 360.0 - 180.0
+        lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * y / n)))
+        lat = math.degrees(lat_rad)
+    else:
+        raise NotImplementedError("Unknown style")
+    return (lat, lng)
+
+
+def getTileURL(tile: Tile):
+    url = ""
+    x, y, z = tile.getall()
+    if tile.style == 'google_satellite':
+        url = f'http://mt2.google.cn/vt/lyrs=s&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}'
+    elif tile.style == 'gaode_satellite':
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=6"
+    elif tile.style == 'gaode_road_label':
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=7"
+    elif tile.style == 'gaode_dark_label':
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=8"
+    return url
+
+
+def getResp(tile: Tile):
+    tile_url = getTileURL(tile)
+    req = urllib.request.Request(tile_url)
     req.add_header('User-Agent', random.choice(agents))
     resp = urllib.request.urlopen(req, timeout=60)
     return resp
 
 
 def getImg(tile: Tile) -> np.ndarray:
-    pic = getTile(tile)
+    pic = getResp(tile)
     data = np.asarray(bytearray(pic.read()), dtype="uint8")
     img = cv2.imdecode(data, cv2.IMREAD_COLOR)
     return img
@@ -104,7 +130,7 @@ def getNeighborImg(tile: Tile, ring: int) -> np.ndarray:
     for _x in range(x - ring, x + ring + 1):
         row = None
         for _y in range(y - ring, y + ring + 1):
-            pic = getTile(Tile(_x, _y, zoom))
+            pic = getResp(Tile(_x, _y, zoom))
             data = np.asarray(bytearray(pic.read()), dtype="uint8")
             img = cv2.imdecode(data, cv2.IMREAD_COLOR)
             if row is not None:
