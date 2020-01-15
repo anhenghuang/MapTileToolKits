@@ -86,13 +86,21 @@ def getTileURL(tile: Tile):
     url = ""
     x, y, z = tile.getall()
     if tile.style == 'google_satellite':
-        url = f'http://mt2.google.cn/vt/lyrs=s&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}'
+        url = f'https://mt2.google.com/vt/lyrs=s&src=app&x={x}&y={y}&z={z}'
+    elif tile.style == 'google_terrain':
+        url = f'https://mt2.google.com/vt/lyrs=p&src=app&x={x}&y={y}&z={z}'
+    elif tile.style == 'google_terrain_dark':
+        url = f'https://mt2.google.com/vt/lyrs=t&src=app&x={x}&y={y}&z={z}'
     elif tile.style == 'gaode_satellite':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=6"
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=6"
     elif tile.style == 'gaode_road_label':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=7"
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=7"
     elif tile.style == 'gaode_dark_label':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scl=1&style=8"
+        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8"
+    elif type(tile.style) == type(''.format):
+        # custom tiles. e.g.
+        # tile.style = "https://www.example.com/x={x}&y={y}&z={z}".format
+        url = tile.style(x=x, y=y, z=zoom)
     return url
 
 
