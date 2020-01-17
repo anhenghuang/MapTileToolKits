@@ -10,12 +10,11 @@ import urllib.request
 class Tile:
     x = y = zoom = None
     style = 'google_satellite'
-
+    style_format = None
     def __init__(self, x, y, zoom, style=None):
         self.x, self.y, self.zoom = x, y, zoom
         if style:
             self.style = style
-
     def getall(self):
         return self.x, self.y, self.zoom
 
@@ -60,7 +59,7 @@ agents = [
 
 
 def geo_2_tile(lat: float, lng: float, zoom: float, style: str = None) -> Tile:
-    if style.split('_')[0] in ['google', 'gaode']:
+    if style is None or style.split('_')[0] in ['google', 'gaode', 'openstreetmap']:
         lat_rad = math.radians(lat)
         n = 2.0 ** zoom
         x = int((lng + 180.0) / 360.0 * n)
@@ -72,7 +71,7 @@ def geo_2_tile(lat: float, lng: float, zoom: float, style: str = None) -> Tile:
 
 def tile_2_geo(tile: Tile) -> list:
     x, y, zoom = tile.getall()
-    if tile.style.split('_')[0] in ['google', 'gaode']:
+    if tile.style.split('_')[0] in ['google', 'gaode', 'openstreetmap']:
         n = 2.0 ** zoom
         lng = x / n * 360.0 - 180.0
         lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * y / n)))
@@ -83,23 +82,27 @@ def tile_2_geo(tile: Tile) -> list:
 
 
 def getTileURL(tile: Tile):
+    """A tile server wiki: https://wiki.openstreetmap.org/wiki/Tile_servers"""
     url = ""
     x, y, z = tile.getall()
     if tile.style == 'google_satellite':
-        url = f'https://mt2.google.com/vt/lyrs=s&src=app&x={x}&y={y}&z={z}'
+        url = f'https://mt{random.choice(range(4))}.google.com/vt/lyrs=s&src=app&x={x}&y={y}&z={z}'
     elif tile.style == 'google_terrain':
-        url = f'https://mt2.google.com/vt/lyrs=p&src=app&x={x}&y={y}&z={z}'
+        url = f'https://mt{random.choice(range(4))}.google.com/vt/lyrs=p&src=app&x={x}&y={y}&z={z}'
     elif tile.style == 'google_terrain_dark':
-        url = f'https://mt2.google.com/vt/lyrs=t&src=app&x={x}&y={y}&z={z}'
+        url = f'https://mt{random.choice(range(4))}.google.com/vt/lyrs=t&src=app&x={x}&y={y}&z={z}'
     elif tile.style == 'gaode_satellite':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=6"
+        url = f"https://wprd0{random.choice(range(1,5))}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=6"
     elif tile.style == 'gaode_road_label':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=7"
+        url = f"https://wprd0{random.choice(range(1,5))}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=7"
     elif tile.style == 'gaode_dark_label':
-        url = f"https://wprd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8"
+        url = f"https://wprd0{random.choice(range(1,5))}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&size=1&scl=1&style=8"
+    elif tile.style == 'openstreetmap':
+        url = f"https://{random.choice(['a','b','c'])}.tile.openstreetmap.org/{z}/{x}/{y}.png"
     elif type(tile.style) == type(''.format):
         # custom tiles. e.g.
         # tile.style = "https://www.example.com/x={x}&y={y}&z={z}".format
+        # You must implement function like geo_2_tile, tile_2_geo yourself If you want to use custom tiles.
         url = tile.style(x=x, y=y, z=zoom)
     return url
 
